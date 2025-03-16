@@ -13,20 +13,23 @@ export component App inherits Window {
     in property <[string]> data;
 
     callback open-file-dialog;
-    callback mouse_moved(x: length, y: length);
+    callback copy-activated();
+    callback paste-activated();
 
     MenuBar {
         Menu {
             title: @tr("MenuBar" => "Edit");
-            MenuItem { title: @tr("MenuBar" => "Copy"); }
-            MenuItem { title: @tr("MenuBar" => "Paste"); }
+            MenuItem { title: @tr("MenuBar" => "Copy"); 
+            activated => { root.copy-activated(); }
+            }
+            
+            MenuItem { title: @tr("MenuBar" => "Paste");
+            activated => { root.paste-activated(); }
+            }
         }
     }
-    global-input := TouchArea {
-        moved =>  {
-            mouse_moved(global-input.mouse-x, global-input.mouse-y);
-        }
-    }
+
+
     
     if dir.is-empty : VerticalLayout {
         Button { 
@@ -37,12 +40,13 @@ export component App inherits Window {
         
         slider := Slider {
             changed(value) => {
+                debug("Slider value changed to {}", value);
                 root.iterationLimit = value;
-                debug(global-input.mouse-x);
             }
+            step: 1;            
             minimum: 0;
-            maximum: 15000;
-            value: 500;
+            maximum: 15;
+            value: 1;
         }
         
     }           
