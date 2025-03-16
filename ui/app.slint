@@ -1,0 +1,72 @@
+// Copyright © SixtyFPS GmbH <info@slint.dev>
+// SPDX-License-Identifier: MIT
+
+import { CheckBox, StandardListView, StandardButton, Button, Slider, VerticalBox, ScrollView } from "std-widgets.slint";
+
+
+export component App inherits Window {
+    preferred-width: 700px;
+    preferred-height: 500px;
+    title: @tr("Testing File dirs");
+    in-out property<string> dir;
+    out property <int> iterationLimit;
+    in property <[string]> data;
+
+    callback open-file-dialog;
+    callback mouse_moved(x: length, y: length);
+
+    MenuBar {
+        Menu {
+            title: @tr("MenuBar" => "Edit");
+            MenuItem { title: @tr("MenuBar" => "Copy"); }
+            MenuItem { title: @tr("MenuBar" => "Paste"); }
+        }
+    }
+    global-input := TouchArea {
+        moved =>  {
+            mouse_moved(global-input.mouse-x, global-input.mouse-y);
+        }
+    }
+    
+    if dir.is-empty : VerticalLayout {
+        Button { 
+        text: "Pick a directory";
+        clicked => {root.open-file-dialog()}
+        }
+        
+        
+        slider := Slider {
+            changed(value) => {
+                root.iterationLimit = value;
+                debug(global-input.mouse-x);
+            }
+            minimum: 0;
+            maximum: 15000;
+            value: 500;
+        }
+        
+    }           
+    if !dir.is-empty : VerticalBox {
+        Text {
+            text: "Selected Directory: " + dir;
+        }
+        ScrollView {
+            vertical-scrollbar-policy: always-on;
+            viewport-height: 500px;
+            viewport-width: 100px;
+            VerticalBox { 
+            for dt in data : HorizontalLayout {
+                CheckBox {
+                    checked: true;
+                    padding-right: 10px;
+                }
+                Text { 
+                    text: dt;
+                }
+            }
+            }   
+        
+        }
+    
+    }
+}
