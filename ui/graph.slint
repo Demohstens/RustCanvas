@@ -1,0 +1,12 @@
+export component GraphWindow inherits Window {
+    preferred-width: 700px;
+    preferred-height: 500px;
+    title: @tr("Testing graphs dirs");
+    in-out property<image> graph;
+
+    Image {
+        source: graph;
+    }
+
+    
+}

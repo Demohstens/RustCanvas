@@ -4457,12 +4457,15 @@ dependencies = [
 name = "slint_rs"
 version = "0.1.0"
 dependencies = [
+ "base64",
  "clipboard-win 5.4.0",
+ "image",
  "rfd",
  "serde",
  "serde_json",
  "slint",
  "slint-build",
+ "svg",
 ]
 
 [[package]]
@@ -4617,6 +4620,12 @@ dependencies = [
  "rustversion",
  "syn 2.0.100",
 ]
+
+[[package]]
+name = "svg"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94afda9cd163c04f6bee8b4bf2501c91548deae308373c436f36aeff3cf3c4a3"
 
 [[package]]
 name = "svgtypes"
