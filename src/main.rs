@@ -19,7 +19,9 @@ fn main () {
     let window = GraphWindow::new().unwrap();
 
     window.set_graph(custom_slint_image); // Pass the base64 string to the image source
-
+    window.on_clicked(move |x, y| {
+        println!("x: {x}, y: {y}");
+    });
     window.run().unwrap();
 
 }
