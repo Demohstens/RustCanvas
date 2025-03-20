@@ -1,3 +1,10 @@
+use std::fmt::Debug;
+
+use image::ImageBuffer;
+use serde::de;
+use slint::{platform::software_renderer::TargetPixel, SharedPixelBuffer};
+use svg::Node;
+
 use crate::graph::ToSvg;
 
 
@@ -34,7 +41,8 @@ impl Dom {
 
 impl ToSvg for Dom {
     fn to_svg(&self) -> svg::Document {
-        let mut svg = svg::Document::new();
+        let mut svg = svg::Document::new().set("viewBox", (0, 0, 100, 100)).set("width", 100).set("height", 100);
+        println!("{:?}", svg.get_attributes());
         for child in &self.children {
             let mut paths: Vec<Box<dyn svg::Node>> = Vec::new();
             match child {
@@ -45,12 +53,51 @@ impl ToSvg for Dom {
                 }
                 None => {}
             }
-            for path in paths.iter() {
+            for path in paths.iter() {  // Example: Adjust as necessary
                 svg = svg.add(path.clone());
             }   
         }
         svg
     }
+}impl Dom {
+    pub fn to_img(&self, width: u32, height: u32) -> SharedPixelBuffer<slint::Rgba8Pixel> {
+        // Create a SharedPixelBuffer directly with the right size
+    
+        // Get a mutable slice to the buffer's data
+        let mut img_bytes = Vec::with_capacity((width * height * 4) as usize);
+        for y in 0..height {
+            for x in 0..width {
+                // White pixel (RGBA)
+                img_bytes.push(0); // R
+                img_bytes.push(0); // G
+                img_bytes.push(0); // B
+                img_bytes.push(0); // A
+            }
+        }
+        for child in &self.children {
+            match child {
+                Some(child) => {
+                    let shape = &child.data;
+                    for y in 0..height {
+                        for x in 0..width {
+                            let p = Point::new(x as f32, y as f32);
+                            if shape.inside(p) {
+                                // Red pixel (RGBA)
+                                img_bytes[(y * width + x) as usize * 4] = 255; // R
+                                img_bytes[(y * width + x) as usize * 4 + 1] = 0; // G
+                                img_bytes[(y * width + x) as usize * 4 + 2] = 0; // B
+                                img_bytes[(y * width + x) as usize * 4 + 3] = 255; // A
+                                
+                            } 
+                        }
+                    }
+                }
+                None => {}
+            }
+        }
+        
+        SharedPixelBuffer::clone_from_slice(&img_bytes, width, height)
+        }
 }
 
 #[derive(Debug)]
@@ -90,6 +137,14 @@ pub struct Circle {
     pub center: Point,
     pub r: f32,
 }
+impl Circle {
+    pub fn new(x: f32, y: f32, r: f32) -> Self {
+        Self {
+            center: Point::new(x, y),
+            r,
+        }
+    }
+}
 impl Shape for Circle {
     fn inside(&self, p: Point) -> bool {
         let dx = p.x - self.center.x;
@@ -103,6 +158,9 @@ impl Shape for Circle {
             .set("r", self.r)
             .set("fill", "red");
         Box::new(circle)
+    }
+    fn fmt(&self) -> String {
+        format!("Circle at ({}, {}) with radius {}", self.center.x, self.center.y, self.r)
     }
 }
 #[derive(Debug)]
@@ -129,13 +187,23 @@ impl Shape for Rectangle {
             .set("stroke-width", 1);
         Box::new(rect)
     }
+    fn fmt(&self) -> String {
+        format!(
+            "Rectangle at ({}, {}) with width {} and height {}",
+            self.origin.x, self.origin.y, self.width, self.height
+        )
+    }
 }
 #[derive(Debug)]
 pub struct Line {
     pub p1: Point,
     pub p2: Point,
 }
-
+impl Line {
+    pub fn new(p1: Point, p2: Point) -> Self {
+        Self { p1, p2 }
+    }
+}
 impl Shape for Line {
     fn inside(&self, p: Point) -> bool {
         p.x >= self.p1.x
@@ -151,11 +219,15 @@ impl Shape for Line {
             .set("fill", "none");
         Box::new(path)
     }
+    fn fmt(&self) -> String {
+        format!("Line from ({}, {}) to ({}, {})", self.p1.x, self.p1.y, self.p2.x, self.p2.y)
+    }
 }
 
 pub trait Shape {
     fn inside(&self, p: Point) -> bool;
     fn to_svg(&self) -> Box<dyn svg::Node>;
+    fn fmt(&self) -> String;
 }
 
 #[derive(Debug)]

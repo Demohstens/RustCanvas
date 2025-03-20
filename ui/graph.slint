@@ -1,18 +1,31 @@
 export component GraphWindow inherits Window {
     preferred-width: 700px;
     preferred-height: 500px;
+
     title: @tr("Testing graphs dirs");
     in-out property<image> graph;
 
     callback clicked(x: length, y: length);
 
+    changed width => {
+        dimensions-changed(self.width, self.height);
+    }
+    changed height => {
+        dimensions-changed(self.width, self.height);
+    }
+    callback dimensions-changed(width: length, height: length);
+    
+
     global-input := TouchArea {
         clicked => {
             root.clicked(global-input.mouse-x, global-input.mouse-y);
         }
-        Image {
+        img := Image {
             source: graph;
+            x: 0;
+            y: 0;
         }
+
     }
 
     
