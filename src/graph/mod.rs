@@ -1,3 +1,5 @@
+use crate::dom::{Dom, DomElement, Shape};
+
 #[derive(Debug)]
 pub struct Graph {
     pub nodes: Vec<Node>,
@@ -42,11 +44,14 @@ impl Edge {
 }
 
 pub trait ToSvg {
-    fn to_svg(&self) -> String;
+    fn to_svg(&self) -> svg::Document;
+}
+pub trait ToDom {
+    fn to_dom(&self) -> Dom;
 }
 
 impl ToSvg for Graph { 
-    fn to_svg(&self) -> String {
+    fn to_svg(&self) -> svg::Document {
         let path = svg::node::element::Circle::new();
         let mut paths = vec![path];
         for node in &self.nodes {
@@ -61,6 +66,17 @@ impl ToSvg for Graph {
         for path in paths {
             doc = doc.add(path);
         }
-        doc.to_string()
+        doc
+    }
+}
+
+impl ToDom for Graph {
+    fn to_dom(&self) -> Dom {
+        let mut dom = Dom::new();
+        for node in &self.nodes {
+            let el = DomElement::new(node.id, node.name.clone(), Shape::Circle { cx: node.id as i32 * 10, cy: node.id as i32 * 10, r: node.id as i32 * 1 });
+            dom.children.push(Some(el));
+        }
+    dom
     }
 }
