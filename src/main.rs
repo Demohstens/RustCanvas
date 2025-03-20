@@ -8,7 +8,7 @@ slint::include_modules!();
 fn main () {
     let mut graph = graph::Graph::new();
     let mut vdom = Dom::new();
-    for i in 0..10 {
+    for i in 0..2 {
         let node = graph::Node::new(i, format!("Node {}", i));
         graph.insert_node(node);
     }

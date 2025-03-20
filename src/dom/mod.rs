@@ -16,13 +16,15 @@ impl Dom {
         for child in &self.children {
             match child {
                 Some(child) => {
+                    if child.data.inside(Point::new(ev.x, ev.y)) {
+                        println!("Event inside: {:?}", child.name);
                     match &child.onclick {
                         Some(handler) => {
                             handler(ev);
                             return;
                         }
                         None => {}
-                    }
+                    }}
                 }
                 None => {}
             }
@@ -32,42 +34,20 @@ impl Dom {
 
 impl ToSvg for Dom {
     fn to_svg(&self) -> svg::Document {
-        let mut paths: Vec<Box<dyn svg::Node>> = Vec::new();
         let mut svg = svg::Document::new();
         for child in &self.children {
+            let mut paths: Vec<Box<dyn svg::Node>> = Vec::new();
             match child {
                 Some(child) => {
-                    match &child.el_type {
-                        Shape::Circle { cx, cy, r } => {
-                            let new_path = svg::node::element::Circle::new()
-                                .set("cx", *cx)
-                                .set("cy", *cy)
-                                .set("r", *r);
-                            paths.push(Box::new(new_path));
-                        }
-                        Shape::Rectangle { x, y, width, height } => {
-                            let new_path = svg::node::element::Rectangle::new()
-                                .set("x", *x)
-                                .set("y", *y)
-                                .set("width", *width)
-                                .set("height", *height);
-                            paths.push(Box::new(new_path));
-                        }
-                        Shape::Line { x1, y1, x2, y2 } => {
-                            let new_path = svg::node::element::Line::new()
-                                .set("x1", *x1)
-                                .set("y1", *y1)
-                                .set("x2", *x2)
-                                .set("y2", *y2);
-                            paths.push(Box::new(new_path));
-                        }
-                    }
-                    for path in paths.iter() {
-                        svg = svg.add(path.clone());
-                    }
+                    let new_path = child.data.to_svg();
+                    paths.push(new_path);
+                    
                 }
                 None => {}
             }
+            for path in paths.iter() {
+                svg = svg.add(path.clone());
+            }   
         }
         svg
     }
@@ -75,8 +55,8 @@ impl ToSvg for Dom {
 
 #[derive(Debug)]
 pub struct Event {
-    x: f32,
-    y: f32,
+    pub x: f32,
+    pub y: f32,
 }
 impl Event {
     pub fn new(x: f32, y: f32) -> Self {
@@ -87,17 +67,17 @@ pub struct DomElement {
     id: usize,
     pub name: String,
     pub onclick: Option<Box<dyn Fn(Event)>>,
-    pub el_type: Shape,
+    pub data: Box<dyn Shape>,
     pub children: Vec<Option<DomElement>>,
 }
 
 impl DomElement {
-    pub fn new(id: usize, name: String, el_type: Shape) -> Self {
+    pub fn new(id: usize, name: String, data: Box<dyn Shape>) -> Self {
         Self {
             id,
             name,
             onclick: None,
-            el_type,
+            data,
             children: Vec::new(),
         }
     }
@@ -105,8 +85,87 @@ impl DomElement {
         self.onclick = Some(event);
     }
 }
-pub enum Shape {
-    Circle { cx: i32, cy: i32, r: i32 },
-    Rectangle { x: i32, y: i32, width: i32, height: i32 },
-    Line { x1: i32, y1: i32, x2: i32, y2: i32 },
+#[derive(Debug)]
+pub struct Circle {
+    pub center: Point,
+    pub r: f32,
+}
+impl Shape for Circle {
+    fn inside(&self, p: Point) -> bool {
+        let dx = p.x - self.center.x;
+        let dy = p.y - self.center.y;
+        dx * dx + dy * dy <= self.r * self.r
+    }   
+    fn to_svg(&self) -> Box<dyn svg::Node> {
+        let circle = svg::node::element::Circle::new()
+            .set("cx", self.center.x)
+            .set("cy", self.center.y)
+            .set("r", self.r)
+            .set("fill", "red");
+        Box::new(circle)
+    }
+}
+#[derive(Debug)]
+pub struct Rectangle {
+    pub origin: Point,
+    pub width: f32,
+    pub height: f32,
+}
+impl Shape for Rectangle {
+    fn inside(&self, p: Point) -> bool {
+        p.x >= self.origin.x
+            && p.x <= self.origin.x + self.width
+            && p.y >= self.origin.y
+            && p.y <= self.origin.y + self.height
+    }
+    fn to_svg(&self) -> Box<dyn svg::Node> {
+        let rect = svg::node::element::Rectangle::new()
+            .set("x", self.origin.x)
+            .set("y", self.origin.y)
+            .set("width", self.width)
+            .set("height", self.height)
+            .set("fill", "none")
+            .set("stroke", "black")
+            .set("stroke-width", 1);
+        Box::new(rect)
+    }
+}
+#[derive(Debug)]
+pub struct Line {
+    pub p1: Point,
+    pub p2: Point,
+}
+
+impl Shape for Line {
+    fn inside(&self, p: Point) -> bool {
+        p.x >= self.p1.x
+            && p.x <= self.p2.x
+            && p.y >= self.p1.y
+            && p.y <= self.p2.y
+    }
+    fn to_svg(&self) -> Box<dyn svg::Node> {
+        let path = svg::node::element::Path::new()
+            .set("d", format!("M {} {} L {} {}", self.p1.x, self.p1.y, self.p2.x, self.p2.y))
+            .set("stroke", "black")
+            .set("stroke-width", 1)
+            .set("fill", "none");
+        Box::new(path)
+    }
+}
+
+pub trait Shape {
+    fn inside(&self, p: Point) -> bool;
+    fn to_svg(&self) -> Box<dyn svg::Node>;
+}
+
+#[derive(Debug)]
+pub struct Point {
+    pub x: f32,
+    pub y: f32,
+}
+
+impl Point {
+    pub fn new(x: f32, y: f32) -> Self {
+        Self { x, y }
+    }
 }

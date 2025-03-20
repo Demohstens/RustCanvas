@@ -1,4 +1,4 @@
-use crate::dom::{Dom, DomElement, Shape};
+use crate::dom::{Dom, DomElement, Circle, Point};
 
 #[derive(Debug)]
 pub struct Graph {
@@ -74,7 +74,7 @@ impl ToDom for Graph {
     fn to_dom(&self) -> Dom {
         let mut dom = Dom::new();
         for node in &self.nodes {
-            let el = DomElement::new(node.id, node.name.clone(), Shape::Circle { cx: node.id as i32 * 10, cy: node.id as i32 * 10, r: node.id as i32 * 1 });
+            let el = DomElement::new(node.id, node.name.clone(), Box::new(Circle { center: Point::new(node.id as f32 * 10.0, node.id as f32 * 10.0), r: node.id as f32 * 10.0 }));
             dom.children.push(Some(el));
         }
     dom
