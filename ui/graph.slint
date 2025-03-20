@@ -2,7 +2,7 @@ export component GraphWindow inherits Window {
     preferred-width: 700px;
     preferred-height: 500px;
 
-    title: @tr("Testing graphs dirs");
+    title: @tr("Testing custom UI");
     in-out property<image> graph;
 
     callback clicked(x: length, y: length);
@@ -20,6 +20,14 @@ export component GraphWindow inherits Window {
         clicked => {
             root.clicked(global-input.mouse-x, global-input.mouse-y);
         }
+        moved => {
+            if global-input.mouse-x > root.width || global-input.mouse-x < 0 || global-input.mouse-y > root.height || global-input.mouse-y < 0 {
+                root.title = "Out of bounds";
+            } else {
+                root.title = "Custom UI";
+            }
+        }
+        
         img := Image {
             source: graph;
             x: 0;

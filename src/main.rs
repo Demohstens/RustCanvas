@@ -4,21 +4,23 @@ mod graph;
 mod dom;
 
 
-use dom::{Circle, Dom, DomElement, Event, Point, Line};
+use std::cell::UnsafeCell;
 
+use dom::{Circle, Dom, DomElement, Event, Point, Line};
+use graph::{ToDom, ToSvg};
 
 slint::include_modules!();
 fn main () {
     let vdom = std::rc::Rc::new(std::cell::RefCell::new(Dom::new()));
+
     // let custom_slint_image = slint::Image::load_from_svg_data(vdom.to_svg().to_string().as_bytes()).unwrap();
     // let custom_slint_image = slint::Image::from_rgba8(vdom.to_img());
     // Create Slint window and set the image data
     let window = GraphWindow::new().unwrap();
 
-    // window.set_graph(custom_slint_image); // Pass the base64 string to the image source
     let vdom_clone = vdom.clone();
     window.on_clicked(move |x, y| {
-        let mut vdom = vdom_clone.borrow_mut();
+        let vdom = vdom_clone.borrow_mut();
         println!("x: {x}, y: {y}");
         vdom.dispatch_event(Event::new(x, y)); 
     });
